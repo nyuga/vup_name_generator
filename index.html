@@ -119,8 +119,14 @@
                 //     e.style.width = (e.value.length || 1) + "ch";
                 // }
             }
-            function generate_one() {
-                if (name_word.length == 0) {
+            function generate_one(retry) {
+                if (retry===undefined) {
+                    retry=10
+                }
+                if(retry<1){
+                    return
+                }
+                if (name_word.length === 0) {
                     let word = getRandomItem(head_freq[0], head_freq[1]);
                     name_word.push(word);
                     update_view();
@@ -128,20 +134,19 @@
                 } 
                 let last_word = name_word.at(-1);
                 console.log(last_word);
-                if (last_word == "\n") {
+                if (last_word === "\n") {
                     console.log("end");
                     return;
                 } 
                 let word_freq = next_freq[last_word];
                 let next_word = " ";
-                if(word_freq!=undefined && word_freq[0].length>2)
-                    console.log(word_freq[0].length);
+                if(word_freq!==undefined && word_freq[0].length>2)
                     next_word = getRandomItem(
                         word_freq[0],
                         word_freq[1]
                 );
                 // 可能生成空格，也可能因为跳过而保留空格
-                if (next_word == " ") {
+                if (next_word === " ") {
                     //length_freq[n]是长度小于等于n的概率
                     const probabilities=[length_freq[name_word.length],1-length_freq[name_word.length]];
                     if (getRandomItem([true,false],probabilities)) {
@@ -153,10 +158,11 @@
                             body_freq[1]
                         );
                     }
-                    
                 }
-                if (next_word == "\n" && name_word.length < 2) {
-                    generate_one();
+                if (next_word === "\n" && name_word.length < 2) {
+
+                    console.log('重试');
+                    generate_one(retry-1);
                 }
                 else{
                     name_word.push(next_word);
@@ -164,7 +170,7 @@
                 }
             }
             function generate_all(){
-                while(name_word.length==0 || name_word.at(-1)!='\n'){
+                while(name_word.length===0 || name_word.at(-1)!='\n'){
                     generate_one();
                 }
             }
@@ -174,7 +180,7 @@
                 set_info("");
             }
             function open_search_url(){
-                if(name_word.length==0){
+                if(name_word.length===0){
                     return
                 }
                 let name_str = name_word.join('');
@@ -185,7 +191,7 @@
             nameElement.addEventListener('keydown', function(event) {
                 const keyCode = event.keyCode || event.which;
                 if (keyCode === 8 || keyCode === 46) {
-                    if (name_word.length>0 && name_word.at(-1)=='\n') {
+                    if (name_word.length>0 && name_word.at(-1)==='\n') {
                         name_word.pop();
                         update_view();
                         event.preventDefault();
