@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>vup名字生成器</title>
+        <style>
+            body {
+                text-align: center;
+            }
+            .container {
+                margin: 10px ;
+            }
+            .input-wrapper {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            input,
+            p,
+            button {
+                margin: 10px auto;
+            }
+            input {
+                padding: 10px;
+                font-size: 32px;
+                border: none;
+                width: 16ch;
+                border-bottom: 2px solid #ccc;
+                outline: none;
+                background-color: transparent;
+                box-sizing: border-box;
+                text-align: center;
+            }
+            input:focus {
+                border-bottom-color: #4caf50;
+            }
+            .placeholder {
+                height: 1em;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 16px;
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+            button:hover {
+                background-color: #45a049;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1>vup名字生成器</h1>
+        <div class="container">
+            <div class="input-wrapper"> <input type="text" id="name" placeholder="点击按键生成" oninput="adjustInputWidth()"> </div>
+            <p id="info" class="placeholder">&nbsp;</p>
+            <div>
+                <button onclick="generate_one()">生成单字</button>
+                <button onclick="generate_all()">完整生成</button>
+                <button onclick="clear_name()">清除</button>
+            </div>
+            <div>
+                <button onclick="open_search_url()">搜一下有没有这人</button>
+            </div>
+            
+            <div>
+                <p>功能介绍：</p>
+                <p>标题下方是生成的名字，初始状态是空的。生成结果是可以编辑的，比如可以自己给出第一个字。</p>
+                <p>点击“生成单字”有两种结果，一种是会在当前已有的文字的基础上增加一个字，另一种是认为已经可以结束生成，这时候会显示“生成完成”。</p>
+                <p>点击“完整生成”相当于反复点击“生成单字”直到出现“生成完成”。在“生成完成”的情况下输入删除键不会删除文字，而是会消去“生成完成”的状态。</p>
+                <p>点击“搜一下有没有这人”可以在B站搜索叫这个名字的用户，注意移动端浏览器要切换桌面模式。</p>
+            </div>
+        </div>
+        <script src="freq_data.js"></script>
+        <script>
+            function getRandomItem(items, probabilities) {
+                // 检查数组长度是否匹配
+                if (items.length !== probabilities.length) {
+                    throw new Error("数组长度不匹配");
+                }
+                // 生成一个0到1之间的随机数
+                const randomNum = Math.random();
+
+                let cumulativeProbability = 0;
+                for (let i = 0; i < items.length; i++) {
+                    cumulativeProbability += probabilities[i];
+                    if (randomNum <= cumulativeProbability) {
+                        return items[i];
+                    }
+                }
+            }
+            let name_word = [];
+            function update_view() {
+                var e = document.getElementById("name");
+                e.value = name_word.join("");
+                let last_word = name_word.at(-1);
+                if (last_word == "\n") {
+                    set_info("生成完成");
+                }
+                else{
+                    set_info("");
+                }
+                adjustInputWidth();
+            }
+            function set_info(mes) {
+                var e = document.getElementById("info");
+                e.textContent = mes;
+            }
+            function adjustInputWidth() {
+                var e = document.getElementById("name");
+                e.style.width = "1ch";
+                e.style.width = e.scrollWidth + "px";
+                // if (name_word.length<1) {
+                //     e.style.width = (e.value.length || 1) + "ch";
+                // }
+            }
+            function generate_one() {
+                if (name_word.length == 0) {
+                    let word = getRandomItem(head_freq[0], head_freq[1]);
+                    name_word.push(word);
+                    update_view();
+                    return;
+                } 
+                let last_word = name_word.at(-1);
+                console.log(last_word);
+                if (last_word == "\n") {
+                    console.log("end");
+                    return;
+                } 
+                let word_freq = next_freq[last_word];
+                let next_word = " ";
+                if(word_freq!=undefined && word_freq[0].length>2)
+                    console.log(word_freq[0].length);
+                    next_word = getRandomItem(
+                        word_freq[0],
+                        word_freq[1]
+                );
+                // 可能生成空格，也可能因为跳过而保留空格
+                if (next_word == " ") {
+                    //length_freq[n]是长度小于等于n的概率
+                    const probabilities=[length_freq[name_word.length],1-length_freq[name_word.length]];
+                    if (getRandomItem([true,false],probabilities)) {
+                        next_word = "\n"
+                    }
+                    else{
+                        next_word = getRandomItem(
+                            body_freq[0],
+                            body_freq[1]
+                        );
+                    }
+                    
+                }
+                if (next_word == "\n" && name_word.length < 3) {
+                    generate_one();
+                }
+                else{
+                    name_word.push(next_word);
+                    update_view();
+                }
+            }
+            function generate_all(){
+                while(name_word.length==0 || name_word.at(-1)!='\n'){
+                    generate_one();
+                }
+            }
+            function clear_name() {
+                name_word = [];
+                update_view();
+                set_info("");
+            }
+            function open_search_url(){
+                if(name_word.length==0){
+                    return
+                }
+                let name_str = name_word.join('');
+                name_str = name_str.replace('\n','');
+                window.open('https://search.bilibili.com/upuser?keyword='+name_str);
+            }
+            const nameElement = document.getElementById('name');
+            nameElement.addEventListener('keydown', function(event) {
+                const keyCode = event.keyCode || event.which;
+                if (keyCode === 8 || keyCode === 46) {
+                    if (name_word.length>0 && name_word.at(-1)=='\n') {
+                        name_word.pop();
+                        update_view();
+                        event.preventDefault();
+                    }                    
+                }
+            });
+            nameElement.addEventListener('input', function(event) {
+                const inputValue = event.target.value;
+                name_word = inputValue.split('');
+                update_view();
+            });
+        </script>
+    </body>
+</html>
