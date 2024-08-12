@@ -24,7 +24,7 @@
                 padding: 10px;
                 font-size: 32px;
                 border: none;
-                width: 16ch;
+                width: 18ch;
                 border-bottom: 2px solid #ccc;
                 outline: none;
                 background-color: transparent;
@@ -66,13 +66,16 @@
             <div>
                 <button onclick="open_search_url()">搜一下有没有这人</button>
             </div>
+            <div>
+                固定开头：<input type="text" id="prefix" placeholder="此处为开头">
+            </div>
             
             <div>
                 <p>功能介绍：</p>
                 <p>标题下方是生成的名字，初始状态是空的。生成结果是可以编辑的，比如可以自己给出第一个字。</p>
-                <p>点击“生成单字”有两种结果，一种是会在当前已有的文字的基础上增加一个字，另一种是认为已经可以结束生成，这时候会显示“生成完成”。</p>
-                <p>点击“完整生成”相当于反复点击“生成单字”直到出现“生成完成”。在“生成完成”的情况下输入删除键不会删除文字，而是会消去“生成完成”。</p>
-                <p>生成完成的状态下，点击生成不会再有反应，需要删除或者点击清除</p>
+                <p>点击“生成单字”有两种结果，一种是会增加一个字，另一种是认为应该结束生成，此时会显示“生成完成”。“完整生成”相当于反复点击“生成单字”直到结束生成。</p>
+                <p>点击“清除”会把当前名字替换成“固定开头”内的文字。</p>
+                <p>在“生成完成”的情况下输入删除键不会删除文字，而是会消去“生成完成”。次数，生成单字不会再有反应，完整生成会重新生成。</p>
                 <p>点击“搜一下有没有这人”可以在B站搜索叫这个名字的用户，注意移动端浏览器要切换桌面模式。</p>
             </div>
         </div>
@@ -101,6 +104,7 @@
                 let last_word = name_word.at(-1);
                 if (last_word == "\n") {
                     set_info("生成完成");
+                    console.log(e.value)
                 }
                 else{
                     set_info("");
@@ -133,7 +137,7 @@
                     return;
                 } 
                 let last_word = name_word.at(-1);
-                console.log(last_word);
+                // console.log(last_word);
                 if (last_word === "\n") {
                     console.log("end");
                     return;
@@ -147,16 +151,16 @@
                 );
                 // 可能生成空格，也可能因为跳过而保留空格
                 if (next_word === " ") {
-                    //length_freq[n]是长度小于等于n的概率
-                    const probabilities=[length_freq[name_word.length],1-length_freq[name_word.length]];
-                    if (getRandomItem([true,false],probabilities)) {
-                        next_word = "\n"
-                    }
-                    else{
-                        next_word = getRandomItem(
+                    next_word = getRandomItem(
                             body_freq[0],
                             body_freq[1]
-                        );
+                    );
+                    if (name_word.length >= 4) {
+                        //length_freq[n]是长度小于等于n的概率
+                        const probabilities=[length_freq[name_word.length],1-length_freq[name_word.length]];
+                        if (getRandomItem([true,false],probabilities)) {
+                            next_word = "\n"
+                        }
                     }
                 }
                 if (next_word === "\n" && name_word.length < 2) {
@@ -170,12 +174,16 @@
                 }
             }
             function generate_all(){
+                if (name_word.at(-1)=='\n' || name_word.length===0) {
+                    clear_name()
+                }
                 while(name_word.length===0 || name_word.at(-1)!='\n'){
                     generate_one();
                 }
             }
             function clear_name() {
-                name_word = [];
+                var e = document.getElementById("prefix");
+                name_word = e.value.split('');
                 update_view();
                 set_info("");
             }
